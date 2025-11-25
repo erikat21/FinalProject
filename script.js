@@ -29,6 +29,7 @@ let warpTimeout = null;
 let slowTimeout = null;
 let fadeTimeout = null;
 let lastTime = 0;
+let warpHuePhase = 0;
 
 function resetStar(star) {
   star.x = spaceWidth / 2;
@@ -41,7 +42,8 @@ function resetStar(star) {
   star.speed = 0.6 + Math.random() * 2.1;
   star.tw = Math.random() * Math.PI * 2;
   star.twSpeed = 0.015 + Math.random() * 0.025;
-  star.hue = 180 + Math.random() * 40;
+  star.hueOffset = Math.random() * 60 - 30;
+  star.hue = 210;
 }
 
 function initStars() {
@@ -61,11 +63,26 @@ function renderSpace(timestamp) {
   const deltaTime = (timestamp - lastTime) / 16.66;
   lastTime = timestamp;
 
+  const inStorySteps =
+    isInStory && !document.body.classList.contains("cinematic-mode");
+
+  if (inStorySteps) {
+    warpFactor = 0;
+    warpTarget = 0;
+    starGlobalAlpha = 0;
+    starTargetAlpha = 0;
+    spaceCtx.clearRect(0, 0, spaceWidth, spaceHeight);
+    requestAnimationFrame(renderSpace);
+    return;
+  }
+
   spaceCtx.fillStyle = "rgba(2, 6, 23, 0.9)";
   spaceCtx.fillRect(0, 0, spaceWidth, spaceHeight);
 
   warpFactor += (warpTarget - warpFactor) * 0.1 * deltaTime;
   starGlobalAlpha += (starTargetAlpha - starGlobalAlpha) * 0.08 * deltaTime;
+
+  warpHuePhase += warpFactor * 0.12 * deltaTime;
 
   for (const star of stars) {
     star.x += star.vx * star.speed * warpFactor * deltaTime;
@@ -100,16 +117,19 @@ function renderSpace(timestamp) {
       spaceCtx.arc(star.x, star.y, glowRadius, 0, Math.PI * 2);
       spaceCtx.fill();
     } else {
-      const trailLength = warpFactor * star.speed * 0.8;
+      const warpIntensity = Math.min(warpFactor, 10);
+      const trailLength = warpIntensity * star.speed * 0.9;
       const tailX = star.x - star.vx * trailLength;
       const tailY = star.y - star.vy * trailLength;
 
+      const baseHue = 220 + 80 * Math.sin(warpHuePhase * 0.5);
+      const hue = (baseHue + star.hueOffset + 360) % 360;
+      const lightness = 55 + Math.min(warpIntensity, 5) * 7;
+
       spaceCtx.globalAlpha = starGlobalAlpha;
       spaceCtx.lineCap = "round";
-
-      const lightness = 60 + Math.min(warpFactor, 4) * 10;
-      spaceCtx.strokeStyle = `hsl(${star.hue}, 80%, ${lightness}%)`;
-      spaceCtx.lineWidth = star.size * 0.8;
+      spaceCtx.strokeStyle = `hsl(${hue}, 80%, ${lightness}%)`;
+      spaceCtx.lineWidth = star.size * (0.7 + warpIntensity * 0.04);
 
       spaceCtx.beginPath();
       spaceCtx.moveTo(tailX, tailY);
@@ -389,6 +409,11 @@ d3.json("data/countries.json").then((world) => {
     document.body.classList.remove("cinematic-mode");
     resizeCanvas();
     isEarthVisible = true;
+
+    warpTarget = 0;
+    warpFactor = 0;
+    starTargetAlpha = 0;
+    starGlobalAlpha = 0;
 
     const globeFile = element.dataset.globeFile;
     const chartFile = element.dataset.chartFile;
