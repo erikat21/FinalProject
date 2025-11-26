@@ -302,3 +302,150 @@ body.cinematic-mode .content-area {
 body.cinematic-mode #scrolly {
     padding: 0;
 }
+
+#intro-cards {
+  position: fixed;
+  inset: 0;
+  padding: 2.5rem 2.5rem;
+  display: flex;
+  align-items: center;   
+  justify-content: space-between;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 400ms ease-out;
+  z-index: 20;
+}
+
+body.cinematic-mode.story-intro-active #intro-cards {
+  opacity: 1;
+  pointer-events: none; 
+}
+
+body.race-lift #race-panel-left {
+  --liftY: -18vh;   /* tweak how high the card rises */
+}
+.intro-card {
+  max-width: 360px;
+  border-radius: 18px;
+  background: rgba(8, 19, 47, 0.92);
+  border: 1px solid rgba(255, 255, 255, 0.12); 
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.55);
+  padding: 1.3rem 1.6rem;
+  font-family: "Work Sans", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  color: #e5e7eb;
+  font-size: 0.92rem;
+  line-height: 1.5;
+  pointer-events: auto;
+}
+
+.intro-card h2,
+.intro-card h3 {
+  font-family: "Playfair Display", serif;
+  font-size: 1.2rem;
+  margin-bottom: 0.4rem;
+  color: #f9fafb;
+}
+
+.intro-card-body {
+  margin: 0.2rem 0 0;
+  color: #cbd5f5;
+}
+
+
+.intro-card-right {
+  transform: translateX(56px);
+  opacity: 0;
+  transition:
+    transform 520ms cubic-bezier(0.23, 0.96, 0.3, 1),
+    opacity 520ms ease-out;
+}
+
+.intro-card-left {
+  --liftY: 0px;
+  transform: translate(-56px, var(--liftY));
+  opacity: 0;
+  transition:
+    transform 520ms cubic-bezier(0.23, 0.96, 0.3, 1),
+    opacity 520ms ease-out 120ms;
+}
+
+body.cinematic-mode.story-intro-active #intro-cards .intro-card-right {
+  transform: translateX(0);
+  opacity: 1;
+}
+
+body.cinematic-mode.story-intro-active #intro-cards .intro-card-left {
+  transform: translate(0, var(--liftY));
+  opacity: 1;
+}
+
+
+body.race-lift #race-panel-left {
+  --liftY: 0vh; /* this prevents the card from blowing up*/
+}
+
+
+/* mobile: stack them */
+
+@media (max-width: 900px) {
+  #intro-cards {
+    padding: 1.5rem;
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: center;
+    gap: 1rem;
+  }
+
+  .intro-card {
+    max-width: none;
+  }
+
+  .intro-card-left,
+  .intro-card-right {
+    transform: translateY(24px);
+  }
+
+  #intro-cards.visible .intro-card-left,
+  #intro-cards.visible .intro-card-right {
+    transform: translateY(0);
+  }
+}
+
+
+body.cinematic-mode #intro-cards {
+  pointer-events: none;
+}
+
+
+#race-panel-left {
+  position: relative;
+  overflow: visible;
+  padding-bottom: 0;
+}
+
+#race-panel-inner {
+  margin-top: 1rem;
+  width: calc(100% + 3.2rem);
+  margin-left: -1.6rem;
+  margin-right: -1.6rem;
+
+  height: 0;                     
+  border-radius: 0 0 18px 18px;
+
+  background: #f4f5fb;
+  border-top: 1px solid rgba(148, 163, 184, 0.35);
+  box-shadow: 0 24px 60px rgba(15, 23, 42, 0.4);
+
+  overflow: hidden;
+  opacity: 0;
+
+  transition:
+    height 800ms cubic-bezier(0.24, 0.8, 0.32, 1),
+    opacity 500ms ease-out;
+}
+
+body.race-expanded #race-panel-inner {
+  height: 60vh;                  
+  opacity: 1;
+}
+

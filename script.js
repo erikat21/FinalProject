@@ -9,12 +9,6 @@ let spaceHeight = window.innerHeight;
 let scrollTimeout = null;
 let userIsScrolling = false;
 
-function resizeSpaceCanvas() {
-  spaceWidth = window.innerWidth;
-  spaceHeight = window.innerHeight;
-  spaceCanvas.width = spaceWidth;
-  spaceCanvas.height = spaceHeight;
-}
 
 
 let stars = [];
@@ -31,6 +25,12 @@ let fadeTimeout = null;
 let lastTime = 0;
 let warpHuePhase = 0;
 
+function resizeSpaceCanvas() {
+  spaceWidth = window.innerWidth;
+  spaceHeight = window.innerHeight;
+  spaceCanvas.width = spaceWidth;
+  spaceCanvas.height = spaceHeight;
+}
 
 function resetStar(star) {
   star.x = spaceWidth / 2;
@@ -157,6 +157,22 @@ window.addEventListener("resize", resizeSpaceCanvas);
 
 const context = canvas.getContext("2d");
 const container = document.querySelector(".left-panel");
+const introCards = document.getElementById("intro-cards");
+
+function showIntroCards() {
+  document.body.classList.add("cinematic-mode");
+  document.body.classList.add("story-intro-active");
+
+  setTimeout(() => {
+    expandRacePanel();
+  }, 800);
+}
+
+function hideIntroCards() {
+  document.body.classList.remove("story-intro-active");
+}
+
+
 
 function setProjection(scale, width, height) {
   projection = d3
@@ -186,6 +202,36 @@ let dotAlpha = 1.0;
 
 let scrollLocked = false;
 let absorbNextScroll = false;
+let hasStartedStory = false;
+
+const racePanelInner = document.getElementById("race-panel-inner");
+
+function expandRacePanel() {
+  document.body.classList.add("race-lift");
+
+  const EXPAND_DELAY = 2000; // how long you wait before white panel starts
+  const STRETCH_DURATION = 800; // MUST match the CSS transition duration
+
+  // make sure scroll is locked during the whole sequence
+  if (!scrollLocked) {
+    lockScroll();
+  }
+
+  setTimeout(() => {
+    document.body.classList.add("race-expanded");
+
+    // wait for the stretch animation to finish, THEN unlock scroll
+    setTimeout(() => {
+      unlockScroll();
+    }, STRETCH_DURATION);
+  }, EXPAND_DELAY);
+}
+
+function collapseRacePanel() {
+  document.body.classList.remove("race-expanded");
+  document.body.classList.remove("race-lift");
+}
+
 
 function preventScroll(e) {
   if (!scrollLocked) return;
@@ -515,6 +561,15 @@ function enterStory() {
   if (isInStory || isWarping) return;
   isInStory = true;
   isWarping = true;
+
+  const firstTime = !hasStartedStory;
+  hasStartedStory = true;
+
+  if (firstTime) {
+      lockScroll();   
+  }
+
+  hideIntroCards();
   clearWarpTimers();
 
   scrolly.classList.add("visible");
@@ -529,7 +584,6 @@ function enterStory() {
     behavior: "auto",
   });
 
-  lockScroll();
 
   initStars();
 
@@ -577,19 +631,25 @@ function enterStory() {
           draw();
 
           warpTarget = WARP_IDLE;
-          starTargetAlpha = 1;
           isWarping = false;
 
-          unlockScroll();
+          // start fading stars out immediately
+          starTargetAlpha = 0;
 
           fadeTimeout = setTimeout(() => {
-            if (!isWarping) {
-              warpTarget = 0.0;
-              starTargetAlpha = 0.0;
-            }
-            fadeTimeout = null;
-          }, 1000);
+            showIntroCards();
+            
+          }, 1200); 
         });
+
+
+      setTimeout(() => {
+        if (!document.body.classList.contains("story-intro-active")) {
+          showIntroCards();
+        }
+      }, ZOOM_DURATION + 200);
+
+
     }, DECEL_DURATION);
   }, WARP_DURATION);
 }
@@ -599,13 +659,14 @@ function leaveStory() {
   if (isWarping) return;
 
   unlockScroll();
-
-  isInStory = false;
   clearWarpTimers();
+  hideIntroCards();
+
   warpTarget = WARP_IDLE;
   starTargetAlpha = 1;
   starGlobalAlpha = 1;
   isEarthVisible = true;
+  isInStory = false;
 
   scrolly.classList.remove("visible");
   intro.classList.remove("slide-up");
