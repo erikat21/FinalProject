@@ -321,13 +321,13 @@ body.cinematic-mode .content-area {
   color: var(--text-muted);
 }
 .ghost-step {
-  height: 140vh;
+  height: 100vh;
   margin-bottom: 0;
   opacity: 0;            
   pointer-events: none;
 }
 .ghost-step .step {
-    min-height: 140vh;
+    min-height: 100vh;
 }
 .step-block:not(.ghost-step):first-of-type {
   margin-top: 60px;  /* tweak as you like */
